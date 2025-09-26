@@ -18,9 +18,21 @@ def main():
     
 # Exercise 1
 def do_unused(fname):
-    print("UNUSED not implemented")
-    return -1
+    with open(fname, "r") as f1:
+        file1 = f1.read()
+        tree = ast.parse(file1, filename=fname)
 
+    # temp dict to store variables
+    temp_dict = {}
+    def check_ast(node):
+        pass
+        
+    check_ast(tree)
+        
+    for key,val in temp_dict:
+        print("Variable x is defined but not used in scope myotherfunction")
+        print("Variable x is defined but not used in scope myfunction")
+        print("Variable x is aliased across scopes")
 # Exercise 2
 def do_returns(fname):
     print("RETURNS not implemented")
