@@ -130,18 +130,20 @@ def do_constant(fname):
 
     tree = open_file(fname)
     
-    
     for node in ast.walk(tree):
         if isinstance(node, ast.If):
 
+            # constant condition
             if isinstance(node.test, ast.Constant):
                 print("Conditional statement with constant condition detected")
 
-            if isinstance(node.test, ast.eq):
-                if isinstance(node.test.left, ast.Constant) and isinstance(node.test.right, ast.Constant):
+            # check comparison
+            elif isinstance(node.test, ast.Compare):
+                lhs_rhs = [node.test.left] + node.test.comparators
+
+                if all(isinstance(val, ast.Constant) for val in lhs_rhs):
                     print("Conditional statement with constant condition detected")
-                elif isinstance(node.test.left, ast.Constant) or isinstance(node.test.right, ast.Constant):
-                    print("no output")
+
     return 0
 
 
@@ -178,9 +180,51 @@ def do_secret(fname):
 
 # Exercise 5
 def do_taint(fname):
-    print("TAINT not implemented")
-    return -1
+    # python astanalysis.py taint test.py
+    tree = open_file(fname)
 
+    tainted = {} # keep track of tainted variables
+    danger = False # boolean to track unsafe data flows
+
+    def is_tainted(node):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            # Test functions
+            if node.func.id == "input":
+                return True
+            if node.func.id == "sanitized": # always untainted
+                return False
+            # Check arguments
+            return any(is_tainted(arg) for arg in node.args)
+        
+        # Tracking binary operations
+        if isinstance(node, ast.BinOp):
+            # test both sides of operation
+            return is_tainted(node.left) or is_tainted(node.right)
+        
+        # Tracking variables
+        if isinstance(node, ast.Name):
+            return tainted.get(node.id, False)
+        
+        return False
+
+    # For any assignments
+    for node in ast.walk(tree):
+        # update any tainted vars through assignments
+        if isinstance(node, ast.Assign):
+            if isinstance(node.targets[0], ast.Name):
+                tainted[node.targets[0].id] = is_tainted(node.value)
+    
+    # Check os.system calls for taints
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                if node.func.attr == "system":
+                    if isinstance(node.func.value, ast.Name):
+                        if node.func.value.id == "os":
+                            for arg in node.args:
+                                if is_tainted(arg):
+                                    print("Unsafe data flow between source and sink detected")
+                                    danger = True
+    return 0
 
 if __name__ == "__main__":
     main()
