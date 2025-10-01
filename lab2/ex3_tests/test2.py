@@ -1,3 +1,3 @@
 def myfunction(a, b):
-    if a:
-        print("a")
+    if 3 > 10:
+        print("Never runs")

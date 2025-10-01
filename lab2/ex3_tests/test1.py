@@ -1,3 +1,3 @@
 def myfunction(a, b):
-    if a != 0:
-        print("Nonzero")
+    if 1:
+        print("Always runs")

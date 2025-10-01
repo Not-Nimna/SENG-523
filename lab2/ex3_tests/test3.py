@@ -1,3 +1,3 @@
 def myfunction(a, b):
-    if "hello":
-        print("Hello")
+    if a == 5:
+        print("Sometimes runs")
