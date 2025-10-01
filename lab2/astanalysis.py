@@ -137,11 +137,13 @@ def do_constant(fname):
             if isinstance(node.test, ast.Constant):
                 print("Conditional statement with constant condition detected")
 
+
             # check comparison
             elif isinstance(node.test, ast.Compare):
                 lhs_rhs = [node.test.left] + node.test.comparators
 
                 if all(isinstance(val, ast.Constant) for val in lhs_rhs):
+
                     print("Conditional statement with constant condition detected")
 
     return 0
