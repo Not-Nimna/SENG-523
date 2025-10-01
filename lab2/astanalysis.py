@@ -137,11 +137,19 @@ def do_constant(fname):
             if isinstance(node.test, ast.Constant):
                 print("Conditional statement with constant condition detected")
 
-            if isinstance(node.test, ast.eq):
-                if isinstance(node.test.left, ast.Constant) and isinstance(node.test.right, ast.Constant):
+            # if isinstance(node.test, ast.Eq):
+            #     if isinstance(node.test.left, ast.Constant) and isinstance(node.test.right, ast.Constant):
+            #         print("Conditional statement with constant condition detected")
+            #     elif isinstance(node.test.left, ast.Constant) or isinstance(node.test.right, ast.Constant):
+            #         print("no output")
+
+            elif isinstance(node.test, ast.Compare):
+                left = node.test.left
+                right = node.test.comparators[0]
+
+                if isinstance(left, ast.Constant) and isinstance(right, ast.Constant):
                     print("Conditional statement with constant condition detected")
-                elif isinstance(node.test.left, ast.Constant) or isinstance(node.test.right, ast.Constant):
-                    print("no output")
+
     return 0
 
 
