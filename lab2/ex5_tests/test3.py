@@ -1,7 +1,6 @@
 import os
 def myfunction(a, b):
-    if a > 0:
-        cmd = input()
-    else:
-        cmd = "echo safe"
-    os.system(cmd)
+    cmd = input()
+    cmd2 = "ls -l " + cmd
+    cmd3 = remove_spaces(cmd2)
+    os.system(cmd3)
