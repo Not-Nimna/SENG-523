@@ -2,7 +2,7 @@ import ast
 import sys
 from typing import List, Set, Optional, Tuple
 
-# ---------- ID MANAGEMENT ----------
+
 _basic_block_counter = 0
 def _next_basic_block_id_num() -> int:
     global _basic_block_counter
@@ -12,7 +12,8 @@ def _next_basic_block_id_num() -> int:
 def _bb_label(n: int) -> str:
     return f"BB{n}"
 
-# ---------- DEF/USE HELPERS ----------
+# helper funcs
+
 def _collect_used_vars(node: Optional[ast.AST]) -> Set[str]:
     if node is None:
         return set()
@@ -24,13 +25,12 @@ def _collect_used_vars(node: Optional[ast.AST]) -> Set[str]:
 
 def _collect_defined_vars_from_target(target: ast.AST) -> Set[str]:
     defs = set()
-    # Targets can be tuples, names, attributes (ignore attributes for this lab’s scope)
+
     for sub in ast.walk(target):
         if isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Store):
             defs.add(sub.id)
     return defs
 
-# ---------- MODEL ----------
 class StatementType:
     ASSIGNMENT = "Assignment"
     IF = "If"
@@ -48,8 +48,8 @@ class Statement:
 
 class BasicBlock:
     def __init__(self, numeric_id: int, is_entry=False, is_exit=False):
-        self.numeric_id = numeric_id              # integer id for sorting
-        self.id = _bb_label(numeric_id)           # "BB<num>"
+        self.numeric_id = numeric_id              
+        self.id = _bb_label(numeric_id)           
         self.is_entry = is_entry
         self.is_exit = is_exit
         self.statements: List[Statement] = []
@@ -75,7 +75,6 @@ class ExitBlock(BasicBlock):
 
 class ControlFlowGraph:
     def __init__(self):
-        # Make Entry as BB0 (do NOT increment counter for entry)
         self.entry = BasicBlock(0, is_entry=True)
         self.exit: Optional[BasicBlock] = None
         self.blocks: Set[BasicBlock] = {self.entry}
@@ -97,35 +96,33 @@ class ControlFlowGraph:
         a.successors.add(b)
         b.predecessors.add(a)
 
-    # ----- printing -----
     def print_cfg(self):
-        # Sort: Entry (0) first, then numeric order, Exit (its numeric id) naturally last
+        # sort so it prints on order of bbs
         ordered = sorted(self.blocks, key=lambda b: b.numeric_id)
         for bb in ordered:
             if bb.is_entry:
                 print(f"Basic Block {bb.id}: Entry")
-                print("Predecessors:")
+                print("\tPredecessors:")
                 succ_ids = ",".join(sorted([s.id for s in bb.successors], key=_bb_sort_key))
-                print(f"Successors: {succ_ids}")
+                print(f"\tSuccessors: {succ_ids}")
             elif bb.is_exit:
                 print(f"Basic Block {bb.id}: Exit")
                 pred_ids = ",".join(sorted([p.id for p in bb.predecessors], key=_bb_sort_key))
-                print(f"Predecessors: {pred_ids}")
-                print("Successors:")  # Exit has none
+                print(f"\tPredecessors: {pred_ids}")
+                print("\tSuccessors:")  # Exit has none
             else:
                 print(f"Basic Block {bb.id}:")
-                print("Statements:")
+                print("\tStatements:")
                 for st in bb.statements:
                     defs_s = ",".join(sorted(st.def_set))
                     uses_s = ",".join(sorted(st.use_set))
-                    print(f"{st.stmt_type}: defs: {defs_s}; uses: {uses_s}")
+                    print(f"\t{st.stmt_type}: defs: {defs_s}; uses: {uses_s}")
                 pred_ids = ",".join(sorted([p.id for p in bb.predecessors], key=_bb_sort_key))
                 succ_ids = ",".join(sorted([s.id for s in bb.successors], key=_bb_sort_key))
-                print(f"Predecessors: {pred_ids}")
-                print(f"Successors: {succ_ids}")
+                print(f"\tPredecessors: {pred_ids}")
+                print(f"\tSuccessors: {succ_ids}")
 
 def _bb_sort_key(bb_id: str) -> Tuple[int, int]:
-    # Sort “BB<num>” by <num>; treat nonstandard as high
     if bb_id.startswith("BB"):
         try:
             return (0, int(bb_id[2:]))
@@ -133,16 +130,13 @@ def _bb_sort_key(bb_id: str) -> Tuple[int, int]:
             return (1, 0)
     return (1, 0)
 
-# ---------- CFG CONSTRUCTION ----------
-# The builder returns a pair (head_block, tail_block)
-#  - head: block where this sequence begins
-#  - tail: latest block where control flows after the sequence
-# If a return occurs, tail may be None (flow terminated to Exit).
+
+
 def build_from_stmt_list(cfg: ControlFlowGraph, stmts: List[ast.stmt], incoming: BasicBlock) -> Optional[BasicBlock]:
     current = incoming
     for s in stmts:
         if isinstance(s, ast.Assign):
-            # defs from targets
+
             defs = set()
             for t in s.targets:
                 defs |= _collect_defined_vars_from_target(t)
@@ -150,39 +144,34 @@ def build_from_stmt_list(cfg: ControlFlowGraph, stmts: List[ast.stmt], incoming:
             current.add_statement(Statement(StatementType.ASSIGNMENT, defs, uses, s))
 
         elif isinstance(s, ast.Expr):
-            # treat print() only per lab scope
+
             if isinstance(s.value, ast.Call) and isinstance(s.value.func, ast.Name) and s.value.func.id == "print":
                 uses = set()
                 for arg in s.value.args:
                     uses |= _collect_used_vars(arg)
                 current.add_statement(Statement(StatementType.PRINT, set(), uses, s))
             else:
-                # other top-level exprs – count uses only
+
                 uses = _collect_used_vars(s.value)
                 current.add_statement(Statement(StatementType.OTHER, set(), uses, s))
 
         elif isinstance(s, ast.Return):
             uses = _collect_used_vars(s.value)
             current.add_statement(Statement(StatementType.RETURN, set(), uses, s))
-            # connect to Exit and terminate flow
+
             exit_bb = cfg.ensure_exit()
             cfg.add_edge(current, exit_bb)
-            return None  # no further flow after return
-
+            return None  #
+        
         elif isinstance(s, ast.If):
-            # add If stmt in current block
             cond_uses = _collect_used_vars(s.test)
             current.add_statement(Statement(StatementType.IF, set(), cond_uses, s))
-
-            # then branch
             then_head = cfg.new_block()
             cfg.add_edge(current, then_head)
             then_tail = build_from_stmt_list(cfg, s.body, then_head)
             if then_tail is None:
-                # then branch ended in return; no outgoing from there
                 pass
 
-            # else branch (may be empty)
             if s.orelse:
                 else_head = cfg.new_block()
                 cfg.add_edge(current, else_head)
@@ -190,44 +179,41 @@ def build_from_stmt_list(cfg: ControlFlowGraph, stmts: List[ast.stmt], incoming:
             else:
                 else_head = cfg.new_block()
                 cfg.add_edge(current, else_head)
-                else_tail = else_head  # empty else falls through immediately
+                else_tail = else_head  
 
-            # join block
             join_block = cfg.new_block()
             if then_tail is not None:
                 cfg.add_edge(then_tail, join_block)
             if else_tail is not None:
                 cfg.add_edge(else_tail, join_block)
 
-            current = join_block  # continue after the if
-
+            current = join_block  
+            
         elif isinstance(s, ast.While):
-            # Create a condition block
+
             cond_block = cfg.new_block()
             cfg.add_edge(current, cond_block)
 
-            # Put While stmt in the condition block (with its cond uses)
+
             cond_uses = _collect_used_vars(s.test)
             cond_block.add_statement(Statement(StatementType.WHILE, set(), cond_uses, s))
 
-            # Body
+
             body_head = cfg.new_block()
             cfg.add_edge(cond_block, body_head)
             body_tail = build_from_stmt_list(cfg, s.body, body_head)
             if body_tail is None:
-                # body ended in return; only false edge out of cond remains
+
                 pass
             else:
-                # back-edge for true while
+
                 cfg.add_edge(body_tail, cond_block)
 
-            # After-loop block (false branch)
             after_loop = cfg.new_block()
             cfg.add_edge(cond_block, after_loop)
             current = after_loop
 
         else:
-            # Unhandled stmt type: treat as OTHER, collect uses conservatively
             uses = set()
             for sub in ast.walk(s):
                 if isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Load):
@@ -242,18 +228,17 @@ def _fmt_defs(defs: set) -> str:
 
 def make_cfg(ast_node: ast.AST) -> ControlFlowGraph:
     cfg = ControlFlowGraph()
-    # Program body lives in a fresh block after entry
+
     start = cfg.new_block()
     cfg.add_edge(cfg.entry, start)
     tail = build_from_stmt_list(cfg, getattr(ast_node, "body", []), start)
 
-    # Ensure an exit exists; connect tail → exit when flow reaches the end
+
     exit_bb = cfg.ensure_exit()
     if tail is not None:
         cfg.add_edge(tail, exit_bb)
     return cfg
 
-# ---------- IO / DRIVER ----------
 def open_file(fname: str) -> ast.AST:
     with open(fname, "r") as f:
         src = f.read()
@@ -388,7 +373,6 @@ def do_reaching(fname):
     tree = open_file(fname)
     cfg = make_cfg(tree)
 
-    # --- collect all defs
     all_defs = {(v, bb.id) for bb in cfg.blocks for v in bb.def_set}
 
     gen, kill = {}, {}
@@ -397,7 +381,6 @@ def do_reaching(fname):
         kill[bb] = {(v, other) for (v, other) in all_defs
                                if v in bb.def_set and other != bb.id}
 
-    # --- iterative data-flow
     in_sets  = {bb: set() for bb in cfg.blocks}
     out_sets = {bb: set() for bb in cfg.blocks}
 
@@ -413,28 +396,28 @@ def do_reaching(fname):
                 in_sets[bb], out_sets[bb] = new_in, new_out
                 changed = True
 
-    # --- print results
+    # print da results
     ordered = sorted(cfg.blocks, key=lambda b: b.numeric_id)
     for bb in ordered:
         print(f"Basic Block {bb.id}:")
         if bb.is_entry:
-            print("Predecessors:")
-            print("Successors: " + ",".join(s.id for s in bb.successors))
+            print("\tPredecessors:")
+            print("\tSuccessors: " + ",".join(s.id for s in bb.successors))
             continue
         if bb.is_exit:
             preds = ",".join(p.id for p in bb.predecessors)
-            print(f"Predecessors: {preds}")
-            print("Successors:")
+            print(f"\tPredecessors: {preds}")
+            print("\tSuccessors:")
             continue
 
-        print(f"gens: {_fmt_defs(gen[bb])}")
-        print(f"kills: {_fmt_defs(kill[bb])}")
-        print(f"in: {_fmt_defs(in_sets[bb])}")
-        print(f"out: {_fmt_defs(out_sets[bb])}")
+        print(f"\tgens: {_fmt_defs(gen[bb])}")
+        print(f"\tkills: {_fmt_defs(kill[bb])}")
+        print(f"\tin: {_fmt_defs(in_sets[bb])}")
+        print(f"\tout: {_fmt_defs(out_sets[bb])}")
         preds = ",".join(p.id for p in bb.predecessors)
         succs = ",".join(s.id for s in bb.successors)
-        print(f"Predecessors: {preds}")
-        print(f"Successors: {succs}")
+        print(f"\tPredecessors: {preds}")
+        print(f"\tSuccessors: {succs}")
 
 
 def main():
