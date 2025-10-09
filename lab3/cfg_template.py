@@ -63,6 +63,16 @@ class BasicBlock:
         self.def_set.update(stmt.def_set)
         self.use_set.update(stmt.use_set)
 
+class EntryBlock(BasicBlock):
+    def __init__(self):
+        super().__init__()
+        self.id = "Entry"
+
+class ExitBlock(BasicBlock):
+    def __init__(self):
+        super().__init__()
+        self.id = "Exit"
+
 class ControlFlowGraph:
     def __init__(self):
         # Make Entry as BB0 (do NOT increment counter for entry)
@@ -255,9 +265,124 @@ def do_CFG(fname: str):
     cfg.print_cfg()
     return 0
 
-def do_liveness(fname: str):
-    print("LIVENESS not implemented")
-    return -1
+def do_liveness(fname):
+    with open(fname, "r") as f:
+        source = f.read()
+    tree = ast.parse(source)
+    #create CFG
+    cfg = make_cfg(tree)
+
+    blocks = []
+    # entry first
+    blocks.append(cfg.entry)
+    # middle blocks sorted by id
+    real_blocks = [b for b in cfg.blocks if not isinstance(b, (EntryBlock, ExitBlock))]
+    real_blocks = sorted(real_blocks, key=lambda b: b.id)
+    blocks.extend(real_blocks)
+    # exit last
+    blocks.append(cfg.exit)
+    #lists
+    in_list = [set() for _ in blocks]
+    out_list = [set() for _ in blocks]
+    #list all the blocks
+    all_blocks = []
+    for block in blocks:
+        all_blocks.append(block)
+
+    #loop
+    while len(all_blocks)> 0:
+        #entry
+        current = all_blocks.pop(0)
+        i = blocks.index(current)
+
+        # out set with union in sets
+        new_out = set()
+        for succ in current.successors:
+            if succ in blocks:
+                j = blocks.index(succ)
+                new_out = new_out.union(in_list[j])
+
+        # in set 
+        new_in = set(current.use_set)
+        for a in new_out:
+            if a not in current.def_set:
+                new_in.add(a)
+        
+        # check in set for changes
+        if new_in != in_list[i]:
+            in_list[i] = new_in
+            out_list[i] = new_out
+             # add predecessors to the list
+            for pred in current.predecessors:
+                if pred not in all_blocks:
+                    all_blocks.append(pred)
+        else:
+            out_list[i] = new_out
+
+    #Ensure Final blocks are correct
+    used = set()
+    final_blocks = []
+    for b in blocks:
+        if b.id not in used:
+            final_blocks.append(b)
+            used.add(b.id)
+
+
+    for b in final_blocks:
+        idx = blocks.index(b)
+        prednames = [p.id for p in b.predecessors]
+        succnames = [s.id for s in b.successors]
+
+        is_entry = len(prednames) == 0
+        is_exit = len(succnames) == 0
+        is_mid = 0
+
+        if is_entry:
+            print("Basic Block", b.id, ": Entry")
+        elif is_exit:
+            print("Basic Block", b.id, ": Exit")
+        else:
+            print("Basic Block", b.id, ":")
+            is_mid = 1
+        if is_mid:    
+            # defs
+            print("defs:", end=" ")
+            if len(b.def_set) == 0:
+                print()
+            else:
+                print(" ".join(sorted(b.def_set)))
+            # uses
+            print("uses:", end=" ")
+            if len(b.use_set) == 0:
+                print()
+            else:
+                print(" ".join(sorted(b.use_set)))
+            # in
+            print("in:", end=" ")
+            if len(in_list[idx]) == 0:
+                print()
+            else:
+                print(" ".join(sorted(in_list[idx])))
+            # out
+            print("out:", end=" ")
+            if len(out_list[idx]) == 0:
+                print()
+            else:
+                print(" ".join(sorted(out_list[idx])))
+
+        # preds
+        print("Predecessors:", end=" ")
+        if len(prednames) == 0:
+            print()
+        else:
+            print(" ".join(prednames))
+        # succs
+        print("Successors:", end=" ")
+        if len(succnames) == 0:
+            print()
+        else:
+            print(" ".join(succnames))
+        print()
 
 def do_reaching(fname):
     tree = open_file(fname)
