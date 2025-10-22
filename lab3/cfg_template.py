@@ -12,8 +12,6 @@ def _next_basic_block_id_num() -> int:
 def _bb_label(n: int) -> str:
     return f"BB{n}"
 
-# helper funcs
-
 def _collect_used_vars(node: Optional[ast.AST]) -> Set[str]:
     if node is None:
         return set()
@@ -130,8 +128,6 @@ def _bb_sort_key(bb_id: str) -> Tuple[int, int]:
             return (1, 0)
     return (1, 0)
 
-
-
 def build_from_stmt_list(cfg: ControlFlowGraph, stmts: List[ast.stmt], incoming: BasicBlock) -> Optional[BasicBlock]:
     current = incoming
     for s in stmts:
@@ -224,7 +220,6 @@ def build_from_stmt_list(cfg: ControlFlowGraph, stmts: List[ast.stmt], incoming:
 
 def _fmt_defs(defs: set) -> str:
     return ", ".join(sorted(f"({v}, {b})" for (v, b) in defs))
-
 
 def make_cfg(ast_node: ast.AST) -> ControlFlowGraph:
     cfg = ControlFlowGraph()
