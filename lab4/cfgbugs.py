@@ -20,6 +20,16 @@ class BasicBlock:
         self.label = ""
         self.successors = []
 
+class EntryBlock(BasicBlock):
+    def __init__(self):
+        super().__init__()
+        self.id = "Entry"
+
+class ExitBlock(BasicBlock):
+    def __init__(self):
+        super().__init__()
+        self.id = "Exit"
+
 class ControlFlowGraph:
     def __init__(self):
         self.blocks = []
@@ -69,6 +79,22 @@ def make_cfg_for_function(tree: ast.AST):
     exit_bb.label = "exit"
     for tail in tails:
         if tail is not None:
+            cfg.add_edge(tail, exit_bb)
+    return cfg
+
+def make_cfg(ast_node: ast.AST) -> ControlFlowGraph:
+    cfg = ControlFlowGraph()
+
+    start = cfg.new_block()
+    cfg.add_edge(cfg.entry, start)
+    tail = build_from_stmt_list(cfg, getattr(ast_node, "body", []), start)
+
+    exit_bb = cfg.ensure_exit()
+    if tail is not None:
+        if isinstance(tail, list):
+            for t in tail:
+                cfg.add_edge(t, exit_bb)
+        else:
             cfg.add_edge(tail, exit_bb)
     return cfg
 
@@ -223,8 +249,80 @@ def main():
     
 # Exercise 1
 def do_stores(fname):
-    print("STORES not implemented")
-    return -1
+    tree = open_file(fname)
+
+    # choose CFG builder
+    if isinstance(tree.body[0], ast.FunctionDef):
+        cfg = make_cfg_for_function(tree)
+    else:
+        cfg = make_cfg(tree)
+
+    # store defs and uses
+    defs = {}
+    uses = {}
+    for bb in cfg.blocks:
+        defs[bb] = set()
+        uses[bb] = set()
+        if not hasattr(bb, "node"):
+            continue
+        n = bb.node
+        # assignments
+        if isinstance(n, ast.Assign):
+            for t in n.targets:
+                if isinstance(t, ast.Name):
+                    defs[bb].add(t.id)
+            for v in ast.walk(n.value):
+                if isinstance(v, ast.Name) and isinstance(v.ctx, ast.Load):
+                    uses[bb].add(v.id)
+        # conditions
+        elif isinstance(n, ast.If):
+            for v in ast.walk(n.test):
+                if isinstance(v, ast.Name) and isinstance(v.ctx, ast.Load):
+                    uses[bb].add(v.id)
+
+        elif isinstance(n, ast.While):
+            for v in ast.walk(n.test):
+                if isinstance(v, ast.Name) and isinstance(v.ctx, ast.Load):
+                    uses[bb].add(v.id)
+
+        elif isinstance(n, ast.Return) and n.value:
+            for v in ast.walk(n.value):
+                if isinstance(v, ast.Name) and isinstance(v.ctx, ast.Load):
+                    uses[bb].add(v.id)
+
+        elif isinstance(n, ast.Expr):
+            for v in ast.walk(n):
+                if isinstance(v, ast.Name) and isinstance(v.ctx, ast.Load):
+                    uses[bb].add(v.id)
+
+    live_in = {bb: set() for bb in cfg.blocks}
+    live_out = {bb: set() for bb in cfg.blocks}
+
+    changed = True
+    while changed:
+        changed = False
+        # backward analysis
+        for bb in reversed(cfg.blocks):
+            out_vars = set()
+            for s in bb.successors:
+                out_vars |= live_in[s]
+            new_out = out_vars
+            new_in = uses[bb] | (new_out - defs[bb])
+            if new_in != live_in[bb] or new_out != live_out[bb]:
+                live_in[bb] = new_in
+                live_out[bb] = new_out
+                changed = True
+
+    # report dead stores
+    found = False
+    for bb in cfg.blocks:
+        for v in defs[bb]:
+            if v not in live_out[bb]:
+                print(f"BB{bb.id}: variable {v} definition is never used")
+                found = True
+
+    if not found:
+        print("(none)")
 
 # Exercise 2
 def do_returns(fname):
