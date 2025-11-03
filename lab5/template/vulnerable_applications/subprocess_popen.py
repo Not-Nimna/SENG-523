@@ -1,5 +1,6 @@
 import subprocess
 
+# no flag
 def popen1(user):
     subprocess.Popen("echo " + user)
 

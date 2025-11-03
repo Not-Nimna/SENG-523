@@ -3,4 +3,6 @@ rules:
     message: "Use of os.system detected"
     severity: WARNING
     languages: [python]
-    pattern: os.system(...)
+    patterns:
+      - pattern: os.system(...)
+      - pattern-not: os.system("...")

@@ -3,5 +3,15 @@ rules:
     message: "Potential command injection: subprocess called with shell=True and variable command"
     severity: WARNING
     languages: [python]
-    pattern-either:
-      # TODO: add patterns to detect relevant calls
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern: subprocess.Popen(..., shell=True)
+              - pattern-not: subprocess.Popen("...", shell=True)
+              - pattern-not: subprocess.Popen(["$LIT", ...], shell=True)
+
+          - patterns:
+              - pattern: subprocess.run(..., shell=True)
+              - pattern-not: subprocess.run("...", shell=True)
+              ## error here this also captures variables sintead of just strings in a list
+              - pattern-not: subprocess.run(["...", ...], shell=True)

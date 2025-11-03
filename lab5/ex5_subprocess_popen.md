@@ -1,0 +1,1 @@
+here we wanted to captuea all instalces of the subpresccs popen calls and run calls but only if htey were rush with shell= True and with raibales passed intot the first arguemnt this only appens in line 8 and 14 in fuctions popen2 and popen4 respectively. we cath all calls to poepn and run with shell = true then negate the ones with only variables in them.

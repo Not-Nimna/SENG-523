@@ -1,0 +1,1 @@
+here we captured all instances of the open call and then the os.path.join call and then excutled any of those whcih had only strings in them

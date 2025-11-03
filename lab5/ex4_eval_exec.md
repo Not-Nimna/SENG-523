@@ -1,0 +1,1 @@
+smilar to the ex3 command injection one i only had to do the same sptes where you would get all the occurenaces of eval and exec and then negate the ones that only have the string as input to the argumets.

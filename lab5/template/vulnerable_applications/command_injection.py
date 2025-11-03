@@ -11,4 +11,3 @@ def variable2(user):
 
 def variable3(user):
     os.system(f"echo {user}")
-
