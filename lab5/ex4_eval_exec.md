@@ -1,18 +1,18 @@
 # Exercise 4 – eval / exec with variable input
 
 ## Goal
-Warn only when `eval()` or `exec()` receive **variable/dynamic** input; ignore calls with **constant literals**.
+Warn only when `eval()` or `exec()` are given dynamic (variable) input**. Do not warn when they’re called with a hard-coded string.
 
-## Rule idea (what my YAML does)
-- Use `pattern-either` to match both: `eval($X)` and `exec($X)`.
-- Suppress constant cases with `pattern-not-either` for `eval("...")` and `exec("...")`.
+
+## How does this work?
+- It matches both `eval(X)` and `exec(X)` (where `X` could be a variable, concat, f-string, etc.).
+- It  will skip calls like `eval("...")` or `exec("...")` if they are using a plain string literal.
 
 ## Effect on the sample
 - **Flagged:** `eval(expr)` (line 2) and `exec(code)` (line 5) — arguments are variables.
 - **Not flagged:** `eval("1 + 2")` (line 8) — constant literal.
 
 ## Rationale
-`eval`/`exec` execute strings as Python code. Restricting findings to variable input highlights true RCE risk while avoiding false positives on fixed test literals.
+`eval` and `exec` run whatever code you hand them. The real danger is when untrusted input gets evaluated . Ignoring constant strings can keep the noise down and as a result we can focus on the actual risky cases.
 
-## Notes
-If the project uses wrapper functions around `eval`/`exec`, complementary rules would be required to catch those paths.
+
