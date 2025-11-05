@@ -1,22 +1,22 @@
 # Exercise 6 – Path Traversal (open / os.path.join)
 
 ## Goal
-Warn on potential path traversal when `open()` or `os.path.join()` receive **variables** or **variable+constant mixes**; ignore calls with only **constant literals**.
+The goal is to only warn when `open()` or `os.path.join()` and use dynamic (variable) path parts or a mix of variables and constants. It shouldnt warn when the path is built from hard-coded strings only.
 
-## Rule idea (what my YAML does)
-- Positive match via `pattern-either`:
-  - `open($X)` (any dynamic expression).
-  - `os.path.join($X, ...)` (dynamic components in joins).
-- Exclude purely constant forms:
-  - `open("...")`
-  - `os.path.join("...", "...")`
+## How the rule works
+- It matches to`open(x)` where `x` is any expression (variable, concat, f-string, join, etc.). or also to `os.path.join($X, ...)` where at least one component can be dynamic.
+- It ignores purely constant calls like `open(".....")` and `os.path.join(".....", "...")`
+
 
 ## Effect on the sample
 - **Flagged:** `opener_concat` (line 8), `opener_join_var` (line 16), `opener_join_varconst` (line 20).
 - **Not flagged:** constant-only paths (e.g., lines 12, 24).
 
 ## Rationale
-Unsanitized variables in paths can introduce `../` and escape intended directories. The rule highlights those risky constructions without warning on safe constants.
+If user input ends up in a file path attackers can try `../` or similar tricks to escape the intended directory. By skipping the constant paths, the rule cuts nover oise and focuses on real traversal risks where variables are involved.
 
-## Notes
-This is a syntactic check (no taint tracking). Even if input is sanitized earlier, the rule will warn—acceptable for conservative security scanning.
+
+
+
+
+
