@@ -1,18 +1,16 @@
 # Exercise 3 – Command Injection (os.system)
 
 ## Goal
-Warn only on `os.system()` calls that use **variable/dynamic** input, and ignore calls with **constant literals**.
+Warn only on `os.system()` calls that use **variable/dynamic** input. Ignore calls with **constant literals**.
 
-## Rule idea (what my YAML does)
-- Match every `os.system($X)` call (where `$X` can be any expression).
-- Exclude constant-only cases with `pattern-not: os.system("...")`.
+## How does this work?
+- It looks for any call like `os.system(x)` (where `x` can be a variable, an f-string, a concat, etc.).
+- It ignores calls that pass a plain string literal: `os.system("...")`.
 
 ## Effect on the sample
 - **Flagged:** `os.system(cmd)` (line 7), `os.system("ls " + user)` (line 10), `os.system(f"echo {user}")` (line 13).
 - **Not flagged:** `os.system("echo hello")` (line 4).
 
 ## Rationale
-Command injection occurs when untrusted input reaches the shell. Filtering out constant strings reduces noise and focuses on exploitable flows where attackers can insert shell metacharacters (`;`, `&&`, `|`, `$()`).
+Command injection occurs when untrusted input reaches the shell. Filtering out the constant strings will reduce noise and focus on the exploitable flows anywhare attackers can insert shell metacharacters (`;`, `&&`, `|`, `$()`).
 
-## Notes
-If a project wraps `os.system` in helper functions, additional rules would be needed to match those wrappers.
