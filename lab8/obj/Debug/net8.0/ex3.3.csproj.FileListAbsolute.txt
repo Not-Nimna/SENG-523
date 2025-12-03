@@ -1,0 +1,12 @@
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/obj/Debug/net8.0/ex3.3.GeneratedMSBuildEditorConfig.editorconfig
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/obj/Debug/net8.0/ex3.3.AssemblyInfoInputs.cache
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/obj/Debug/net8.0/ex3.3.AssemblyInfo.cs
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/obj/Debug/net8.0/ex3.3.csproj.CoreCompileInputs.cache
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/obj/Debug/net8.0/ex3.3.sourcelink.json
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/obj/Debug/net8.0/ex3.3.dll
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/obj/Debug/net8.0/refint/ex3.3.dll
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/obj/Debug/net8.0/ex3.3.pdb
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/ex3.3.deps.json
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/ex3.3.dll
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/obj/Debug/net8.0/ref/ex3.3.dll
+/Users/mehvishfatima/Desktop/Fall2025/SENG523/SENG-523/lab8/ex3.3.pdb
