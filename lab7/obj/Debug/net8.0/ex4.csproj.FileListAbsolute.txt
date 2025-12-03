@@ -1,0 +1,15 @@
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/ex4.GeneratedMSBuildEditorConfig.editorconfig
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/ex4.AssemblyInfoInputs.cache
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/ex4.AssemblyInfo.cs
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/ex4.csproj.CoreCompileInputs.cache
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/ex4.sourcelink.json
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/ex4
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/ex4.dll
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/refint/ex4.dll
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/ex4.pdb
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/ex4.deps.json
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/ex4.genruntimeconfig.cache
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/ex4.runtimeconfig.json
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/ex4.dll
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/obj/Debug/net8.0/ref/ex4.dll
+/Users/nimnawijedasa/Desktop/fall/seng 523/SENG-523/lab7/ex4.pdb
